@@ -8,6 +8,7 @@ from collections import defaultdict
 
 from .models import ImportResult
 from .catalog import GARAK_PROBE_MAP
+from .exceptions import ReportParseError
 
 
 DETECTOR_THRESHOLD = 0.5
@@ -29,7 +30,10 @@ def import_garak_report(report_path: str | Path) -> ImportResult:
     """
     report_path = Path(report_path)
     if not report_path.exists():
-        raise FileNotFoundError(f"Report not found: {report_path}")
+        raise ReportParseError(str(report_path), "file does not exist")
+
+    if report_path.stat().st_size == 0:
+        raise ReportParseError(str(report_path), "file is empty")
 
     evals: list[dict] = []
     attempts: list[dict] = []

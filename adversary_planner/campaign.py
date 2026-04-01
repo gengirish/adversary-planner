@@ -12,6 +12,12 @@ from .models import CampaignState, Target, RoundRecord, ImportResult
 from .planner import BayesianPlanner, Recommendation
 from .calibration import calibrate_batch, CalibrationResult
 from .catalog import get_techniques, get_family_for_technique
+from .exceptions import (
+    CampaignNotFoundError,
+    CampaignNotLoadedError,
+    TargetFileError,
+    ValidationError,
+)
 
 CAMPAIGNS_DIR = Path(".adversary_planner") / "campaigns"
 
@@ -32,18 +38,29 @@ class CampaignManager:
         adaptive: bool = True,
     ) -> CampaignState:
         """Create a new campaign from a target YAML file."""
+        if not name or not name.strip():
+            raise ValidationError("Campaign name cannot be empty", field="name")
+
         target_path = Path(target_path)
         if not target_path.exists():
-            raise FileNotFoundError(f"Target file not found: {target_path}")
+            raise TargetFileError(str(target_path), "file does not exist")
 
-        with open(target_path, "r", encoding="utf-8") as f:
-            target_data = yaml.safe_load(f)
+        try:
+            with open(target_path, "r", encoding="utf-8") as f:
+                target_data = yaml.safe_load(f)
+        except yaml.YAMLError as exc:
+            raise TargetFileError(str(target_path), f"invalid YAML: {exc}") from exc
+
+        if not isinstance(target_data, dict):
+            raise TargetFileError(str(target_path), "expected a YAML mapping at top level")
+        if "name" not in target_data:
+            raise TargetFileError(str(target_path), "missing required field 'name'")
 
         self.target = Target.from_dict(target_data)
         self.planner.initialize(self.target)
 
         self.state = CampaignState(
-            name=name,
+            name=name.strip(),
             adaptive=adaptive,
             target=target_data,
             technique_states=self.planner.get_state_dicts(),
@@ -54,9 +71,12 @@ class CampaignManager:
 
     def load(self, campaign_id: str) -> CampaignState:
         """Load an existing campaign by ID."""
+        if not campaign_id or not campaign_id.strip():
+            raise ValidationError("Campaign ID cannot be empty", field="campaign_id")
+
         state_path = self.base_dir / campaign_id / "state.json"
         if not state_path.exists():
-            raise FileNotFoundError(f"Campaign not found: {campaign_id}")
+            raise CampaignNotFoundError(campaign_id)
 
         with open(state_path, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -95,13 +115,15 @@ class CampaignManager:
     ) -> list[Recommendation]:
         """Get next technique recommendations via Thompson Sampling."""
         if self.state is None:
-            raise RuntimeError("No campaign loaded")
+            raise CampaignNotLoadedError()
+        if count < 1:
+            raise ValidationError("Recommendation count must be >= 1", field="count", value=count)
         return self.planner.recommend(n=count, diversify=diversify)
 
     def import_results(self, result: ImportResult) -> RoundRecord:
         """Import scan results and update posteriors."""
         if self.state is None:
-            raise RuntimeError("No campaign loaded")
+            raise CampaignNotLoadedError()
 
         for tech_id, counts in result.technique_results.items():
             self.planner.update(
@@ -130,7 +152,7 @@ class CampaignManager:
     def get_calibrations(self) -> list[CalibrationResult]:
         """Run Z-score calibration on all techniques with observations."""
         if self.state is None:
-            raise RuntimeError("No campaign loaded")
+            raise CampaignNotLoadedError()
 
         results_with_data = {}
         tech_families = {}
