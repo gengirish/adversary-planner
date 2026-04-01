@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #09090b;
+  --bg-secondary: #18181b;
+  --bg-card: #1c1c22;
+  --bg-card-hover: #27272a;
+  --border-color: #2e2e35;
+  --border-accent: #3f3f46;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --accent: #10b981;
+  --accent-dim: #065f46;
+  --danger: #ef4444;
+  --danger-dim: #7f1d1d;
+  --warning: #f59e0b;
+  --warning-dim: #78350f;
+  --info: #3b82f6;
+  --info-dim: #1e3a5f;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-accent) transparent;
+}
+
+.severity-critical { color: #ef4444; }
+.severity-high     { color: #f97316; }
+.severity-medium   { color: #f59e0b; }
+.severity-low      { color: #22c55e; }
+.severity-info     { color: #3b82f6; }
+
+.phase-exploration  { color: #8b5cf6; }
+.phase-transition   { color: #f59e0b; }
+.phase-exploitation { color: #ef4444; }
