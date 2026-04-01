@@ -1,0 +1,25 @@
+# Example target profile for Adversary Planner
+# Describes the LLM system under test
+
+name: Customer Support Bot
+target_type: chatbot
+access_level: black_box
+model_provider: openai
+goals:
+  - jailbreak
+  - extraction
+  - toxicity
+
+constraints:
+  max_queries: 500
+  stealth_priority: moderate
+
+defenses:
+  has_moderation: true
+  has_input_filtering: true
+  has_output_filtering: false
+  has_rate_limiting: true
+
+capabilities:
+  has_tools: false
+  has_rag: false
