@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+.venv/
+venv/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+package-lock.json
+
+# Campaign state
+.adversary_planner/
+
+# Vercel
+.vercel/
+
+# Secrets
+.env
+.env.local
+*.key
+credentials.*
+
+# OS
+Thumbs.db
+.DS_Store
